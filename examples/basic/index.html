@@ -31,12 +31,13 @@
       var focused = false;
       // box color change
       box.addEventListener('raycaster-intersected', function () {
+        if (focused) return;
         focused = true;
         box.setAttribute('color','purple');
       });
       box.addEventListener('raycaster-intersected-cleared', function () {
         focused = false;
-        box.setAttribute('color','black');
+        box.setAttribute('color','orange');
       })
       // trackpad to scale
       remote.addEventListener('axismove', function (e) {
