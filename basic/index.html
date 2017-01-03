@@ -5,9 +5,13 @@
   </head>
   <body>
     <a-scene>
-      <a-entity position="0 1.3 0">
-        <a-entity id="remote" daydream-controller></a-entity>
+      <a-entity position="-0.2 1.3 0">
+        <a-entity id="remote" daydream-controller raycaster="objects: .selectable">
+          <a-cone id="ray" color="cyan" position="0 0 -2" rotation="-90 0 0" radius-bottom="0.005" radius-top="0.001" height="4"></a-cone>
+          <a-box id="position-guide" visible="false" position="0 0 -2"></a-box>
+        </a-entity>
       </a-entity>
+      <a-box id="box" class="selectable" material="color:orange; shader: flat" position="0 1 -4"></a-box>
       <a-sky color="blue"></a-sky>
     </a-scene>
     <!-- GitHub Corner. -->
@@ -18,9 +22,48 @@
     </a>
     <script>
       var remote = document.querySelector('#remote');
-      remote.addEventListener('axismove', function (e) {
-        console.log(e.detail);
+      var box = document.querySelector('#box');
+      var ray = document.querySelector('#ray');
+      var touchStartAxes;
+      var minScale = 0.1;
+      var scaleMultiplier = 1;
+      var newScale = currentScale = 1;
+      var focused = false;
+      // box color change
+      box.addEventListener('raycaster-intersected', function () {
+        if (focused) return;
+        focused = true;
+        box.setAttribute('color','purple');
+      });
+      box.addEventListener('raycaster-intersected-cleared', function () {
+        focused = false;
+        box.setAttribute('color','orange');
       })
+      // trackpad to scale
+      remote.addEventListener('axismove', function (e) {
+        if (!touchStartAxes) return;
+        var deltaX = e.detail.axis[0] - touchStartAxes[0];
+        newScale = currentScale + deltaX*scaleMultiplier;
+        if (newScale < minScale) newScale = minScale;
+        box.setAttribute('scale',newScale+' '+newScale+' '+newScale);
+      });
+      remote.addEventListener('touchstart', function (e) {
+        touchStartAxes = e.detail.axis;
+      });
+      remote.addEventListener('touchend', function (e) {
+        touchStartAxes = null;
+        currentScale = newScale;
+      });
+      remote.addEventListener('buttondown', function (e) {
+        box.setAttribute('color','black');
+      });
+      remote.addEventListener('buttonup', function (e) {
+        if (focused) {
+          box.setAttribute('color','purple');
+        } else {
+          box.setAttribute('color','orange');
+        }
+      });
     </script>
     <style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}
   </body>
