@@ -8,8 +8,8 @@ var bind = AFRAME.utils.bind;
 var trackedControlsUtils = AFRAME.utils.trackedControls;
 var THREE = AFRAME.THREE;
 
-var DAYDREAM_CONTROLLER_MODEL_OBJ_URL = 'https://cdn.aframe.io/controllers/vive/vr_controller_vive.obj';
-var DAYDREAM_CONTROLLER_MODEL_OBJ_MTL = 'https://cdn.aframe.io/controllers/vive/vr_controller_vive.mtl';
+var DAYDREAM_CONTROLLER_MODEL_OBJ_URL = 'https://raw.githubusercontent.com/TechnoBuddhist/VR-Controller-Daydream/master/vr_controller_daydream.obj';
+var DAYDREAM_CONTROLLER_MODEL_OBJ_MTL = 'https://raw.githubusercontent.com/TechnoBuddhist/VR-Controller-Daydream/master/vr_controller_daydream.mtl';
 
 var GAMEPAD_ID_PREFIX = 'Daydream Controller';
 
@@ -125,9 +125,9 @@ AFRAME.registerComponent('daydream-controller', {
     var buttonMeshes;
     if (!this.data.model) { return; }
     buttonMeshes = this.buttonMeshes = {};
-    buttonMeshes.menu = controllerObject3D.getObjectByName('menubutton');
-    buttonMeshes.system = controllerObject3D.getObjectByName('systembutton');
-    buttonMeshes.trackpad = controllerObject3D.getObjectByName('touchpad');
+    buttonMeshes.menu = controllerObject3D.getObjectByName('AppButton_AppButton_Cylinder.004');
+    buttonMeshes.system = controllerObject3D.getObjectByName('HomeButton_HomeButton_Cylinder.005');
+    buttonMeshes.trackpad = controllerObject3D.getObjectByName('TouchPad_TouchPad_Cylinder.003');
     // Offset pivot point
     controllerObject3D.position.set(0, -0.015, 0.04);
   },
