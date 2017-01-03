@@ -9,6 +9,11 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /*
+ * From Boris Smus' (Google) Ray Input library:
+ * https://github.com/borismus/ray-input/blob/master/src/orientation-arm-model.js
+ */
+
+/*
  * Copyright 2016 Google Inc. All Rights Reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
