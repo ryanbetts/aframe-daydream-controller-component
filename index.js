@@ -107,7 +107,7 @@ AFRAME.registerComponent('daydream-controller', {
       });
     } else {
       this.controller = null;
-      this.el.removeAttribue('obj-model');
+      this.el.removeAttribute('obj-model');
       this.el.removeEventListener('model-loaded', this.onModelLoaded);
     }
   },
@@ -145,7 +145,6 @@ AFRAME.registerComponent('daydream-controller', {
   },
 
   updatePose: (function () {
-    var controllerEuler = new THREE.Euler();
     var controllerQuaternion = new THREE.Quaternion();
     return function () {
       var controller = this.controller;
@@ -156,9 +155,8 @@ AFRAME.registerComponent('daydream-controller', {
       var armModelPose;
       if (!controller) { return; }
       // Feed camera and controller into the arm model.
-      camera = this.el.sceneEl.camera;
-      this.armModel.setHeadOrientation(camera.quaternion);
-      this.armModel.setHeadPosition(camera.position);
+      this.armModel.setHeadOrientation(camera.el.object3D.quaternion);
+      this.armModel.setHeadPosition(camera.el.object3D.position);
       // feed the controller orientation into the arm model.
       orientation = pose.orientation || [0, 0, 0, 1];
       controllerQuaternion.fromArray(orientation);
@@ -166,13 +164,8 @@ AFRAME.registerComponent('daydream-controller', {
       // Get resulting pose
       this.armModel.update();
       armModelPose = this.armModel.getPose();
-      controllerEuler.setFromQuaternion(armModelPose.orientation);
-      // update the rotation
-      el.setAttribute('rotation', {
-        x: THREE.Math.radToDeg(controllerEuler.x),
-        y: THREE.Math.radToDeg(controllerEuler.y),
-        z: THREE.Math.radToDeg(controllerEuler.z) + this.data.rotationOffset
-      });
+      // update the rotation (NO EULER!)
+      el.object3D.quaternion.copy(armModelPose.orientation);
       // update the position
       el.setAttribute('position', {
         x: armModelPose.position.x,
@@ -267,11 +260,14 @@ AFRAME.registerComponent('daydream-controller', {
       evtName = 'end';
     }
     previousButtonState.touched = buttonState.touched;
-    this.el.emit('touch' + evtName, {
-      id: id,
-      state: previousButtonState,
-      axis: this.controller.axes
-    });
+    this.el.dispatchEvent(new CustomEvent('touch' + evtName, {
+      'touches':[], // avoid exception in TouchPanner due to namespace collision
+      'detail': {
+        id: id,
+        state: previousButtonState,
+        axis: this.controller.axes
+      }
+    }));
     buttonName = this.mapping['button' + id];
     this.updateButtonModel(buttonName, 'touch' + evtName);
     return true;
