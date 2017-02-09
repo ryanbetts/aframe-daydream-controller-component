@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "aframe-daydream-controller-component",
   "version": "1.0.0",
   "description": "Daydream Controller component for A-Frame.",
   "main": "index.js",
