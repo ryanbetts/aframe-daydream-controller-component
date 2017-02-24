@@ -13,14 +13,10 @@ var DAYDREAM_CONTROLLER_MODEL_OBJ_MTL = 'https://raw.githubusercontent.com/Techn
 
 var GAMEPAD_ID_PREFIX = 'Daydream Controller';
 
-/* grab smus' orientation arm model constructor */
-var OrientationArmModel = require('./OrientationArmModel').default;
-
 /**
  * Daydream Controller component for A-Frame.
  */
 AFRAME.registerComponent('daydream-controller', {
-
   /**
    * Set if component needs multiple instancing.
    */
@@ -31,7 +27,9 @@ AFRAME.registerComponent('daydream-controller', {
     buttonTouchedColor: {default: 'yellow'},  // Light blue.
     buttonPressedColor: {default: 'orange'},  // Light blue.
     model: {default: true},
-    rotationOffset: {default: 0} // use -999 as sentinel value to auto-determine based on hand
+    rotationOffset: {default: 0}, // use -999 as sentinel value to auto-determine based on hand
+    eyesToElbow: {default: {x: 0.175, y: -0.3, z: -0.03}}, // vector from eyes to elbow (divided by user height)
+    forearm: {default: {x: 0, y: 0, z: -0.175}}, // vector from eyes to elbow (divided by user height)
   },
 
   // buttonId
@@ -52,7 +50,6 @@ AFRAME.registerComponent('daydream-controller', {
     this.isControllerPresent = trackedControlsUtils.isControllerPresent; // to allow mock
     this.buttonStates = {};
     this.previousAxis = [];
-    this.armModel = new OrientationArmModel();
     this.onModelLoaded = bind(this.onModelLoaded, this);
     this.checkIfControllerPresent = bind(this.checkIfControllerPresent, this);
     this.onGamepadConnected = bind(this.onGamepadConnected, this);
@@ -107,7 +104,7 @@ AFRAME.registerComponent('daydream-controller', {
       });
     } else {
       this.controller = null;
-      this.el.removeAttribue('obj-model');
+      this.el.removeAttribute('obj-model');
       this.el.removeEventListener('model-loaded', this.onModelLoaded);
     }
   },
@@ -129,7 +126,7 @@ AFRAME.registerComponent('daydream-controller', {
     buttonMeshes.system = controllerObject3D.getObjectByName('HomeButton_HomeButton_Cylinder.005');
     buttonMeshes.trackpad = controllerObject3D.getObjectByName('TouchPad_TouchPad_Cylinder.003');
     // Offset pivot point
-    controllerObject3D.position.set(0, -0.015, 0.04);
+    controllerObject3D.position.set(0, 0, -0.04);
   },
 
   updateButtonModel: function (buttonName, state) {
@@ -145,40 +142,51 @@ AFRAME.registerComponent('daydream-controller', {
   },
 
   updatePose: (function () {
-    var controllerEuler = new THREE.Euler();
+    var offset = new THREE.Vector3();
+    var position = new THREE.Vector3();
     var controllerQuaternion = new THREE.Quaternion();
+    var controllerEuler = new THREE.Euler(0, 0, 0, 'YXZ');
     return function () {
       var controller = this.controller;
       var pose = controller.pose;
       var el = this.el;
       var camera = this.el.sceneEl.camera;
-      var orientation;
-      var armModelPose;
-      if (!controller) { return; }
-      // Feed camera and controller into the arm model.
-      camera = this.el.sceneEl.camera;
-      this.armModel.setHeadOrientation(camera.quaternion);
-      this.armModel.setHeadPosition(camera.position);
-      // feed the controller orientation into the arm model.
-      orientation = pose.orientation || [0, 0, 0, 1];
-      controllerQuaternion.fromArray(orientation);
-      this.armModel.setControllerOrientation(controllerQuaternion);
-      // Get resulting pose
-      this.armModel.update();
-      armModelPose = this.armModel.getPose();
-      controllerEuler.setFromQuaternion(armModelPose.orientation);
-      // update the rotation
-      el.setAttribute('rotation', {
-        x: THREE.Math.radToDeg(controllerEuler.x),
-        y: THREE.Math.radToDeg(controllerEuler.y),
-        z: THREE.Math.radToDeg(controllerEuler.z) + this.data.rotationOffset
-      });
-      // update the position
-      el.setAttribute('position', {
-        x: armModelPose.position.x,
-        y: armModelPose.position.y,
-        z: armModelPose.position.z
-      });
+      var cameraComponent = camera.el.components.camera;
+      var eyesToElbow = this.data.eyesToElbow;
+      var forearm = this.data.forearm;
+
+      // get camera position
+      position.copy(camera.el.object3D.position);
+
+      // set offset for degenerate "arm model" to elbow
+      offset.set(
+	this.data.hand === 'left' ? -eyesToElbow.x : eyesToElbow.x, // hand is to your left, or right
+        eyesToElbow.y, // lower than your eyes
+        eyesToElbow.z); // slightly out in front
+      // scale offset by user height
+      offset.multiplyScalar(cameraComponent.data.userHeight);
+      // apply camera Y rotation (not X or Z, so you can look down at your hand)
+      offset.applyAxisAngle(camera.el.object3D.up, camera.el.object3D.rotation.y);
+      // apply rotated offset to camera position
+      position.add(offset);
+
+      // set offset for degenerate "arm model" forearm
+      offset.set(forearm.x, forearm.y, forearm.z); // forearm sticking out from elbow
+      // scale offset by user height
+      offset.multiplyScalar(cameraComponent.data.userHeight);
+      // apply controller X and Y rotation (tilting up/down/left/right is usually moving the arm)
+      controllerQuaternion.fromArray(pose.orientation || [0, 0, 0, 1]);
+      controllerEuler.setFromQuaternion(controllerQuaternion);
+      controllerEuler.set(controllerEuler.x, controllerEuler.y, 0);
+      offset.applyEuler(controllerEuler);
+      // apply rotated offset to camera position
+      position.add(offset);
+
+      // set as controller position
+      el.setAttribute('position', { x: position.x, y: position.y, z: position.z });
+
+      // set controller rotation directly from pose, if any (NO EULER!)
+      el.object3D.quaternion.copy(controllerQuaternion);
     };
   })(),
 
@@ -267,11 +275,14 @@ AFRAME.registerComponent('daydream-controller', {
       evtName = 'end';
     }
     previousButtonState.touched = buttonState.touched;
-    this.el.emit('touch' + evtName, {
-      id: id,
-      state: previousButtonState,
-      axis: this.controller.axes
-    });
+    this.el.dispatchEvent(new CustomEvent('touch' + evtName, {
+      'touches': [], // avoid exception in TouchPanner due to namespace collision
+      'detail': {
+        id: id,
+        state: previousButtonState,
+        axis: this.controller.axes
+      }
+    }));
     buttonName = this.mapping['button' + id];
     this.updateButtonModel(buttonName, 'touch' + evtName);
     return true;

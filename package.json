@@ -1,5 +1,5 @@
 {
-  "name": "",
+  "name": "aframe-daydream-controller-component",
   "version": "1.0.0",
   "description": "Daydream Controller component for A-Frame.",
   "main": "index.js",
@@ -33,7 +33,7 @@
   },
   "homepage": "https://github.com/ryanbetts/aframe-daydream-controller-component#readme",
   "devDependencies": {
-    "aframe": "^0.3.2",
+    "aframe": "^0.5.0",
     "browserify": "^13.0.0",
     "budo": "^8.2.2",
     "ghpages": "^0.0.8",

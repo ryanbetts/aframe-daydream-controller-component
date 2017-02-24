@@ -5,7 +5,8 @@
   </head>
   <body>
     <a-scene>
-      <a-entity position="-0.2 1.3 0">
+      <a-entity position="0 0 0">
+        <a-camera></a-camera>
         <a-entity id="remote" daydream-controller raycaster="objects: .selectable">
           <a-cone id="ray" color="cyan" position="0 0 -2" rotation="-90 0 0" radius-bottom="0.005" radius-top="0.001" height="4"></a-cone>
           <a-box id="position-guide" visible="false" position="0 0 -2"></a-box>
