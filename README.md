@@ -49,7 +49,7 @@ Install and use by directly including the [browser files](dist):
 <head>
   <title>My A-Frame Scene</title>
   <script src="https://aframe.io/releases/0.4.0/aframe.min.js"></script>
-  <script src="https://rawgit.com/ryanbetts/aframe-daydream-controller-component/master/dist/.min.js"></script>
+  <script src="https://rawgit.com/ryanbetts/aframe-daydream-controller-component/master/dist/aframe-daydream-controller-component.min.js"></script>
 </head>
 
 <body>
