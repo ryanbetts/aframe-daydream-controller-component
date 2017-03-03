@@ -30,6 +30,7 @@ AFRAME.registerComponent('daydream-controller', {
     rotationOffset: {default: 0}, // use -999 as sentinel value to auto-determine based on hand
     eyesToElbow: {default: {x: 0.175, y: -0.3, z: -0.03}}, // vector from eyes to elbow (divided by user height)
     forearm: {default: {x: 0, y: 0, z: -0.175}}, // vector from eyes to elbow (divided by user height)
+    defaultUserHeight: {type: 'number', default: 1.6} // default user height (for cameras with zero)
   },
 
   // buttonId
@@ -164,7 +165,7 @@ AFRAME.registerComponent('daydream-controller', {
         eyesToElbow.y, // lower than your eyes
         eyesToElbow.z); // slightly out in front
       // scale offset by user height
-      offset.multiplyScalar(cameraComponent.data.userHeight);
+      offset.multiplyScalar(cameraComponent.data.userHeight || this.data.defaultUserHeight);
       // apply camera Y rotation (not X or Z, so you can look down at your hand)
       offset.applyAxisAngle(camera.el.object3D.up, camera.el.object3D.rotation.y);
       // apply rotated offset to camera position
@@ -173,7 +174,7 @@ AFRAME.registerComponent('daydream-controller', {
       // set offset for degenerate "arm model" forearm
       offset.set(forearm.x, forearm.y, forearm.z); // forearm sticking out from elbow
       // scale offset by user height
-      offset.multiplyScalar(cameraComponent.data.userHeight);
+      offset.multiplyScalar(cameraComponent.data.userHeight || this.data.defaultUserHeight);
       // apply controller X and Y rotation (tilting up/down/left/right is usually moving the arm)
       controllerQuaternion.fromArray(pose.orientation || [0, 0, 0, 1]);
       controllerEuler.setFromQuaternion(controllerQuaternion);
