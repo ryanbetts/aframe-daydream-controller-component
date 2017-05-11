@@ -251,6 +251,10 @@ AFRAME.registerComponent('daydream-controller', {
       evtName = 'up';
     }
     this.el.emit('button' + evtName, {id: id});
+    this.el.components.raycaster.intersectedEls.forEach((el) => {
+      el.emit('button' + evtName, {id: id});
+      if (evtName === 'up') el.emit('click', {id: id})
+    })
     buttonName = this.mapping['button' + id];
     this.updateButtonModel(buttonName, evtName);
     previousButtonState.pressed = buttonState.pressed;
